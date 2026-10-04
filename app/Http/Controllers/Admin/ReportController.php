@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\ActivityLog;
 
 class ReportController extends Controller
 {
@@ -76,6 +77,7 @@ class ReportController extends Controller
             ->get();
 
         $filename = "laporan-{$from->toDateString()}-sd-{$to->toDateString()}.csv";
+        ActivityLog::record('export', "Export laporan {$from->toDateString()} s/d {$to->toDateString()}");
 
         return response()->streamDownload(function () use ($orders) {
             $out = fopen('php://output', 'w');

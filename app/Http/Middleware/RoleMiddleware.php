@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use App\Models\ActivityLog;
 
 class RoleMiddleware
 {
@@ -21,6 +22,7 @@ class RoleMiddleware
         }
 
         if (! $user || ! in_array($user->role, $roles)) {
+            ActivityLog::record('forbidden', 'Mencoba membuka ' . $request->path() . ' tanpa izin');
             abort(403, 'Anda tidak punya akses ke halaman ini.');
         }
 

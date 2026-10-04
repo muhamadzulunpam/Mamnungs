@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Midtrans\Config;
 use Midtrans\CoreApi;
 use Midtrans\Transaction;
+use App\Models\ActivityLog;
 
 class MidtransService
 {
@@ -82,6 +83,19 @@ class MidtransService
                 'paid_at' => $paymentStatus === 'PAID' ? now() : null,
                 'transaction_id' => $data['transaction_id'] ?? $locked->payment->transaction_id,
             ]);
+
+            $label = match ($orderStatus) {
+                'PAID' => 'lunas',
+                'EXPIRED' => 'kedaluwarsa',
+                default => 'dibatalkan/ditolak',
+            };
+
+            ActivityLog::record(
+                'payment_' . strtolower($orderStatus),
+                "Pembayaran QRIS {$locked->invoice_number} {$label}",
+                $locked,
+                ['source' => auth()->check() ? 'pengecekan kasir' : 'webhook Midtrans'],
+            );
         });
     }
 }

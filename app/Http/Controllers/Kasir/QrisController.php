@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Services\MidtransService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\ActivityLog;
 
 class QrisController extends Controller
 {
@@ -61,6 +62,8 @@ class QrisController extends Controller
 
             $order->update(['status' => 'CANCELLED']);
             $order->payment?->update(['status' => 'FAILED']);
+            
+            ActivityLog::record('payment_cancelled', "Membatalkan pembayaran QRIS {$order->invoice_number}", $order);
         }
 
         return redirect('/kasir')->with('success', 'Pembayaran QRIS dibatalkan.');

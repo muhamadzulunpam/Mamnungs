@@ -11,6 +11,8 @@ use App\Http\Controllers\MidtransWebhookController;
 use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\ActivityLogController;
+
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -38,6 +40,9 @@ Route::middleware('auth')->group(function () {
 
         Route::patch('users/{user}/toggle', [UserController::class, 'toggle'])->name('users.toggle');
         Route::resource('users', UserController::class)->except('show');
+
+        Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+
     });
 
     Route::middleware('role:kasir,admin')->prefix('kasir')->group(function () {
