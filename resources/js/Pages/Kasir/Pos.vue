@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, nextTick } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import DashboardLayout from '../../Layouts/DashboardLayout.vue';
 
@@ -9,6 +9,14 @@ const props = defineProps({
 });
 
 const rupiah = (n) => 'Rp ' + new Intl.NumberFormat('id-ID').format(n || 0);
+
+// ===== FORM CHECKOUT =====
+const form = useForm({
+    items: [],
+    notes: '',
+    payment_method: 'CASH',
+    amount_received: '',
+});
 
 // ===== FILTER MENU =====
 const search = ref('');
@@ -81,16 +89,13 @@ const total = computed(() =>
 );
 
 // ===== PEMBAYARAN =====
-const form = useForm({
-    items: [],
-    notes: '',
-    amount_received: '',
-});
-
 const received = computed(() => Number(form.amount_received) || 0);
 const kembalian = computed(() => received.value - total.value);
+
 const bisaBayar = computed(
-    () => cart.value.length > 0 && received.value >= total.value
+    () =>
+        cart.value.length > 0 &&
+        (form.payment_method === 'QRIS' || received.value >= total.value)
 );
 
 const uangCepat = computed(() => {
@@ -122,7 +127,6 @@ const handleKeydown = (e) => {
     }
 };
 
-import { onMounted, onUnmounted } from 'vue';
 onMounted(() => window.addEventListener('keydown', handleKeydown));
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 </script>
@@ -382,75 +386,50 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
                         </div>
 
                         <!-- Cash input -->
-                        <div class="cart-field">
-                            <label class="cart-field-label">
-                                <i class="bi bi-cash-stack"></i>
-                                Uang Diterima
-                            </label>
-                            <div class="cash-input-wrap">
-                                <span class="cash-prefix">Rp</span>
-                                <input
-                                    v-model.number="form.amount_received"
-                                    type="number"
-                                    min="0"
-                                    class="cash-input"
-                                    placeholder="0"
-                                />
-                            </div>
-                            <div v-if="form.errors.amount_received" class="cart-error">
-                                <i class="bi bi-exclamation-circle-fill"></i>
-                                {{ form.errors.amount_received }}
-                            </div>
-                        </div>
-
-                        <!-- Quick cash -->
-                        <div class="quick-cash">
-                            <button
-                                v-for="n in uangCepat"
-                                :key="n"
-                                :class="[
-                                    'quick-cash-btn',
-                                    { active: received === n },
-                                    { 'is-exact': n === total },
-                                ]"
-                                @click="form.amount_received = n"
-                            >
-                                {{ n === total ? 'Uang Pas' : rupiah(n) }}
+                        <div class="btn-group w-100 mb-3">
+                            <button type="button" class="btn"
+                                    :class="form.payment_method === 'CASH' ? 'btn-success' : 'btn-outline-success'"
+                                    @click="form.payment_method = 'CASH'">
+                                <i class="bi bi-cash-coin me-1"></i> Tunai
+                            </button>
+                            <button type="button" class="btn"
+                                    :class="form.payment_method === 'QRIS' ? 'btn-success' : 'btn-outline-success'"
+                                    @click="form.payment_method = 'QRIS'">
+                                <i class="bi bi-qr-code me-1"></i> QRIS
                             </button>
                         </div>
 
-                        <!-- Kembalian -->
-                        <div :class="['change-row', { 'is-negative': kembalian < 0 }]">
-                            <span class="change-label">
-                                <i class="bi bi-arrow-return-left"></i>
-                                Kembalian
-                            </span>
-                            <span class="change-value">
-                                {{ kembalian < 0
-                                    ? '−' + rupiah(-kembalian)
-                                    : rupiah(kembalian)
-                                }}
-                            </span>
+                        <template v-if="form.payment_method === 'CASH'">
+                            <label class="form-label small mb-1">Uang diterima (tunai)</label>
+                            <input v-model.number="form.amount_received" type="number" min="0" class="form-control mb-2"
+                                :class="{ 'is-invalid': form.errors.amount_received }" />
+                            <div class="invalid-feedback d-block mb-2" v-if="form.errors.amount_received">
+                                {{ form.errors.amount_received }}
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-1 mb-3">
+                                <button v-for="n in uangCepat" :key="n" class="btn btn-sm btn-outline-dark"
+                                        @click="form.amount_received = n">
+                                    {{ n === total ? 'Uang pas' : rupiah(n) }}
+                                </button>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Kembalian</span>
+                                <strong :class="kembalian < 0 ? 'text-danger' : 'text-success'">
+                                    {{ kembalian < 0 ? 'Kurang ' + rupiah(-kembalian) : rupiah(kembalian) }}
+                                </strong>
+                            </div>
+                        </template>
+
+                        <div v-if="form.errors.payment_method" class="alert alert-danger py-2 small">
+                            {{ form.errors.payment_method }}
                         </div>
 
-                        <!-- Pay button -->
-                        <button
-                            class="pay-btn"
-                            :disabled="!bisaBayar || form.processing"
-                            @click="bayar"
-                        >
-                            <span v-if="!form.processing">
-                                <i class="bi bi-check-circle-fill"></i>
-                                Bayar Tunai
-                                <span v-if="bisaBayar" class="pay-amount">
-                                    {{ rupiah(total) }}
-                                </span>
-                            </span>
-                            <span v-else class="pay-spinner">
-                                <span class="mini-spinner"></span>
-                                Memproses...
-                            </span>
+                        <button class="btn btn-success w-100 py-2" :disabled="!bisaBayar || form.processing" @click="bayar">
+                            {{ form.processing ? 'Memproses...' : (form.payment_method === 'QRIS' ? 'Buat QRIS' : 'Bayar Tunai') }}
                         </button>
+                            
                     </div>
                 </div>
             </aside>

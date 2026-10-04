@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use App\Services\MidtransService;
 
 class PosController extends Controller
 {
@@ -24,21 +25,23 @@ class PosController extends Controller
         ]);
     }
 
-    public function checkout(Request $request)
+    public function checkout(Request $request, MidtransService $midtrans)
     {
         $data = $request->validate([
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:99'],
             'notes' => ['nullable', 'string', 'max:500'],
-            'amount_received' => ['required', 'integer', 'min:0'],
+            'payment_method' => ['required', 'in:CASH,QRIS'],
+            'amount_received' => ['required_if:payment_method,CASH', 'nullable', 'integer', 'min:0'],
         ], [
             'items.required' => 'Keranjang masih kosong.',
-            'amount_received.required' => 'Isi uang yang diterima.',
+            'amount_received.required_if' => 'Isi uang yang diterima.',
         ]);
 
-        $order = DB::transaction(function () use ($data, $request) {
-            // Harga SELALU diambil dari database, bukan dari browser
+        $method = $data['payment_method'];
+
+        $order = DB::transaction(function () use ($data, $request, $method) {
             $products = Product::whereIn('id', collect($data['items'])->pluck('product_id'))
                 ->get()
                 ->keyBy('id');
@@ -60,16 +63,17 @@ class PosController extends Controller
 
                 $rows[] = [
                     'product_id' => $product->id,
-                    'product_name' => $product->name,   // salinan nama saat transaksi
-                    'price' => $product->price,         // salinan harga saat transaksi
+                    'product_name' => $product->name,
+                    'price' => $product->price,
                     'quantity' => $item['quantity'],
                     'subtotal' => $lineTotal,
                 ];
             }
 
             $total = $subtotal;
+            $isCash = $method === 'CASH';
 
-            if ($data['amount_received'] < $total) {
+            if ($isCash && $data['amount_received'] < $total) {
                 throw ValidationException::withMessages([
                     'amount_received' => 'Uang yang diterima kurang dari total.',
                 ]);
@@ -81,8 +85,8 @@ class PosController extends Controller
                 'subtotal' => $subtotal,
                 'discount' => 0,
                 'total' => $total,
-                'payment_method' => 'CASH',
-                'status' => 'PAID',
+                'payment_method' => $method,
+                'status' => $isCash ? 'PAID' : 'PENDING',
                 'notes' => $data['notes'] ?? null,
             ]);
 
@@ -90,19 +94,41 @@ class PosController extends Controller
 
             Payment::create([
                 'order_id' => $order->id,
-                'payment_method' => 'CASH',
-                'provider' => 'CASH',
+                'payment_method' => $method,
+                'provider' => $isCash ? 'CASH' : 'MIDTRANS',
                 'amount' => $total,
-                'amount_received' => $data['amount_received'],
-                'change_amount' => $data['amount_received'] - $total,
-                'status' => 'PAID',
-                'paid_at' => now(),
+                'amount_received' => $isCash ? $data['amount_received'] : null,
+                'change_amount' => $isCash ? $data['amount_received'] - $total : null,
+                'status' => $isCash ? 'PAID' : 'PENDING',
+                'paid_at' => $isCash ? now() : null,
             ]);
 
             return $order;
         });
 
-        return redirect()->route('orders.receipt', $order);
+        if ($method === 'CASH') {
+            return redirect("/transaksi/{$order->id}/struk");
+        }
+
+        // QRIS: minta QR ke Midtrans (di luar DB transaction)
+        try {
+            $charge = $midtrans->chargeQris($order);
+
+            $order->payment->update([
+                'transaction_id' => $charge['transaction_id'] ?? null,
+                'raw_response' => $charge,
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+            $order->update(['status' => 'CANCELLED']);
+            $order->payment->update(['status' => 'FAILED']);
+
+            return back()->withErrors([
+                'payment_method' => 'Gagal membuat QRIS: ' . $e->getMessage(),
+            ]);
+        }
+
+        return redirect("/kasir/pembayaran/{$order->id}");
     }
 
     private function nextInvoiceNumber(): string
