@@ -3,6 +3,8 @@
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\Admin\CategoryController;
+
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -19,6 +21,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::get('/dashboard', fn () => Inertia::render('Admin/Dashboard'))
             ->name('admin.dashboard');
+
+        Route::resource('categories', CategoryController::class)->except('show');
     });
 
     Route::middleware('role:kasir')->prefix('kasir')->group(function () {
