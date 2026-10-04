@@ -141,42 +141,38 @@ const stats = computed(() => ({
         <div class="stats-grid">
             <!-- Transaksi Lunas -->
             <div class="stat-card">
-                <div class="stat-top">
-                    <div class="stat-icon" style="background:#eef7e0; color:#6ba324">
-                        <i class="bi bi-receipt"></i>
-                    </div>
+                <div class="stat-icon" style="background:#eef7e0; color:#6ba324">
+                    <i class="bi bi-receipt"></i>
                 </div>
-                <div class="stat-label">Transaksi Lunas</div>
-                <div class="stat-value">{{ stats.count }}</div>
-                <div class="stat-footer">transaksi berhasil</div>
+                <div class="stat-body">
+                    <div class="stat-label">Transaksi Lunas</div>
+                    <div class="stat-value">{{ stats.count }}</div>
+                    <div class="stat-sub">transaksi berhasil</div>
+                </div>
             </div>
 
             <!-- Total Penjualan -->
-            <div class="stat-card stat-card-highlight">
-                <div class="stat-top">
-                    <div class="stat-icon" style="background:#dcfce7; color:#15803d">
-                        <i class="bi bi-cash-stack"></i>
-                    </div>
-                    <div class="stat-badge up">
-                        <i class="bi bi-graph-up-arrow"></i>
-                        Penjualan
-                    </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#dcfce7; color:#15803d">
+                    <i class="bi bi-cash-stack"></i>
                 </div>
-                <div class="stat-label">Total Penjualan</div>
-                <div class="stat-value stat-value-lg">{{ rupiah(stats.total) }}</div>
-                <div class="stat-footer">dari {{ stats.count }} transaksi</div>
+                <div class="stat-body">
+                    <div class="stat-label">Total Penjualan</div>
+                    <div class="stat-value">{{ rupiah(stats.total) }}</div>
+                    <div class="stat-sub">dari {{ stats.count }} transaksi</div>
+                </div>
             </div>
 
             <!-- Rata-rata -->
             <div class="stat-card">
-                <div class="stat-top">
-                    <div class="stat-icon" style="background:#dbeafe; color:#1d4ed8">
-                        <i class="bi bi-calculator"></i>
-                    </div>
+                <div class="stat-icon" style="background:#dbeafe; color:#1d4ed8">
+                    <i class="bi bi-calculator"></i>
                 </div>
-                <div class="stat-label">Rata-rata Transaksi</div>
-                <div class="stat-value">{{ rupiah(stats.average) }}</div>
-                <div class="stat-footer">per transaksi</div>
+                <div class="stat-body">
+                    <div class="stat-label">Rata-rata</div>
+                    <div class="stat-value">{{ rupiah(stats.average) }}</div>
+                    <div class="stat-sub">per transaksi</div>
+                </div>
             </div>
         </div>
 
@@ -457,102 +453,86 @@ const stats = computed(() => ({
     text-transform: capitalize;
 }
 
-/* ============ STAT CARDS ============ */
+/* ============ STAT CARDS (COMPACT) ============ */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
     margin-bottom: 20px;
 }
 
 .stat-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
     background: #ffffff;
     border: 1px solid #eef2e6;
-    border-radius: 18px;
-    padding: 20px;
-    transition: all 0.25s;
+    border-radius: 14px;
+    transition: all 0.2s;
     position: relative;
     overflow: hidden;
-}
-
-.stat-card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 100px;
-    height: 100px;
-    background: radial-gradient(circle, rgba(132, 189, 51, 0.06), transparent 70%);
-    border-radius: 50%;
-    transform: translate(30%, -30%);
+    min-width: 0;
 }
 
 .stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 16px 32px -16px rgba(60, 100, 20, 0.18);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -12px rgba(60, 100, 20, 0.15);
     border-color: #d8e8bf;
-}
-
-.stat-card-highlight {
-    background: linear-gradient(160deg, #ffffff 0%, #fafcf6 100%);
-    border-color: #d8e8bf;
-}
-
-.stat-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
 }
 
 .stat-icon {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 18px;
+    flex-shrink: 0;
 }
 
-.stat-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    border-radius: 100px;
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.stat-badge.up {
-    background: #dcfce7;
-    color: #15803d;
+.stat-body {
+    flex: 1;
+    min-width: 0;
 }
 
 .stat-label {
-    font-size: 12px;
+    font-size: 10.5px;
     font-weight: 700;
     color: #6b7a5e;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    margin-bottom: 6px;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .stat-value {
-    font-size: 24px;
+    font-size: 16px;
     font-weight: 800;
     color: #14210a;
-    letter-spacing: -0.5px;
-    margin-bottom: 4px;
+    letter-spacing: -0.3px;
     font-family: ui-monospace, monospace;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.stat-value-lg { font-size: 26px; }
-
-.stat-footer {
-    font-size: 12px;
+.stat-sub {
+    font-size: 10.5px;
     color: #94a3b8;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 768px) {
+    .stats-grid { grid-template-columns: 1fr; }
 }
 
 /* ============ PANEL ============ */
