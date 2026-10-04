@@ -15,7 +15,7 @@ const adminMenus = [
     { label: 'Dashboard',     href: '/admin/dashboard',  icon: 'bi-grid-1x2' },
     { label: 'Kategori',      href: '/admin/categories', icon: 'bi-tags' },
     // { label: 'Pesanan',       href: '/admin/orders',     icon: 'bi-bag-check' },
-    // { label: 'Menu & Produk', href: '/admin/products',   icon: 'bi-cup-straw' },
+    { label: 'Menu & Produk', href: '/admin/products',   icon: 'bi-cup-straw' },
     // { label: 'Pelanggan',     href: '/admin/customers',  icon: 'bi-people' },
     // { label: 'Laporan',       href: '/admin/reports',    icon: 'bi-graph-up-arrow' },
 ];
