@@ -17,6 +17,8 @@ const adminMenus = [
     { label: 'Menu & Produk', href: '/admin/products',   icon: 'bi-cup-straw' },
     { label: 'Riwayat',     href: '/transaksi', icon: 'bi-clock-history' },
     { label: 'Laporan',       href: '/admin/reports',    icon: 'bi-graph-up-arrow' },
+    { label: 'Pengguna', href: '/admin/users', icon: 'bi-people' },
+    { label: 'Log Aktivitas', href: '/admin/activity-logs', icon: 'bi-clock' },     
 ];
 
 const kasirMenus = [
@@ -29,7 +31,6 @@ const menus = computed(() =>
 );
 
 const secondaryMenus = [
-    { label: 'Pengguna', href: '/admin/users', icon: 'bi-people' },
     { label: 'Bantuan',    href: '/help',     icon: 'bi-question-circle' },
 ];
 
