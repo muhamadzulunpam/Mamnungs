@@ -29,7 +29,7 @@ const menus = computed(() =>
 );
 
 const secondaryMenus = [
-    { label: 'Pengaturan', href: '/settings', icon: 'bi-gear' },
+    { label: 'Pengguna', href: '/admin/users', icon: 'bi-people' },
     { label: 'Bantuan',    href: '/help',     icon: 'bi-question-circle' },
 ];
 
