@@ -102,12 +102,7 @@ class PosController extends Controller
             return $order;
         });
 
-        $change = $order->payment->change_amount;
-
-        return redirect('/kasir')->with(
-            'success',
-            "Transaksi {$order->invoice_number} lunas. Kembalian: Rp" . number_format($change, 0, ',', '.')
-        );
+        return redirect()->route('orders.receipt', $order);
     }
 
     private function nextInvoiceNumber(): string
