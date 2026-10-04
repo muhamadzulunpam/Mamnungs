@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ProductController;
 
 
 Route::middleware('guest')->group(function () {
@@ -23,6 +24,10 @@ Route::middleware('auth')->group(function () {
             ->name('admin.dashboard');
 
         Route::resource('categories', CategoryController::class)->except('show');
+
+        Route::patch('products/{product}/toggle', [ProductController::class, 'toggle'])
+            ->name('products.toggle');
+        Route::resource('products', ProductController::class)->except('show');
     });
 
     Route::middleware('role:kasir')->prefix('kasir')->group(function () {
