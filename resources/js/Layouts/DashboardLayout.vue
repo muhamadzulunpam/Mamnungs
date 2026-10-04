@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 
 const page = usePage();
@@ -12,16 +12,17 @@ const userMenuRef = ref(null);
 
 // ===== MENU CONFIG =====
 const adminMenus = [
-    { label: 'Dashboard',   href: '/admin/dashboard', icon: 'bi-grid-1x2' },
-    { label: 'Pesanan',     href: '/admin/orders',    icon: 'bi-bag-check' },
-    { label: 'Menu & Produk', href: '/admin/products', icon: 'bi-cup-straw' },
-    { label: 'Pelanggan',   href: '/admin/customers', icon: 'bi-people' },
-    { label: 'Laporan',     href: '/admin/reports',   icon: 'bi-graph-up-arrow' },
+    { label: 'Dashboard',     href: '/admin/dashboard',  icon: 'bi-grid-1x2' },
+    { label: 'Kategori',      href: '/admin/categories', icon: 'bi-tags' },
+    // { label: 'Pesanan',       href: '/admin/orders',     icon: 'bi-bag-check' },
+    // { label: 'Menu & Produk', href: '/admin/products',   icon: 'bi-cup-straw' },
+    // { label: 'Pelanggan',     href: '/admin/customers',  icon: 'bi-people' },
+    // { label: 'Laporan',       href: '/admin/reports',    icon: 'bi-graph-up-arrow' },
 ];
 
 const kasirMenus = [
-    { label: 'Kasir / POS', href: '/kasir',           icon: 'bi-cash-coin' },
-    { label: 'Riwayat',     href: '/kasir/history',   icon: 'bi-clock-history' },
+    { label: 'Kasir / POS', href: '/kasir',         icon: 'bi-cash-coin' },
+    { label: 'Riwayat',     href: '/kasir/history', icon: 'bi-clock-history' },
 ];
 
 const menus = computed(() =>
@@ -57,6 +58,41 @@ const handleClickOutside = (e) => {
     }
 };
 
+// ===== FLASH MESSAGE =====
+const flashQueue = ref([]);
+
+const flashConfig = {
+    success: { icon: 'bi-check-circle-fill',         title: 'Berhasil' },
+    error:   { icon: 'bi-x-circle-fill',             title: 'Gagal' },
+    warning: { icon: 'bi-exclamation-triangle-fill', title: 'Perhatian' },
+    info:    { icon: 'bi-info-circle-fill',          title: 'Info' },
+};
+
+// ⬇️ Deklarasi function DULU sebelum watch ⬇️
+const removeFlash = (id) => {
+    flashQueue.value = flashQueue.value.filter((f) => f.id !== id);
+};
+
+const pushFlash = (type, message) => {
+    const id = Date.now() + Math.random();
+    flashQueue.value.push({ id, type, message });
+    setTimeout(() => removeFlash(id), 4500);
+};
+
+// ⬇️ Baru watch setelah function siap ⬇️
+watch(
+    () => page.props.flash,
+    (val) => {
+        if (!val) return;
+        if (val.success) pushFlash('success', val.success);
+        if (val.error)   pushFlash('error', val.error);
+        if (val.warning) pushFlash('warning', val.warning);
+        if (val.info)    pushFlash('info', val.info);
+    },
+    { deep: true, immediate: true }
+);
+
+// ===== LIFECYCLE =====
 onMounted(() => document.addEventListener('click', handleClickOutside));
 onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 </script>
@@ -147,13 +183,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     <button class="hamburger d-lg-none" @click="sidebarOpen = true">
                         <i class="bi bi-list"></i>
                     </button>
-
-                    <!-- Search -->
-                    <div class="search-box d-none d-md-flex">
-                        <i class="bi bi-search"></i>
-                        <input type="text" placeholder="Cari pesanan, menu, pelanggan..." />
-                        <kbd>⌘K</kbd>
-                    </div>
                 </div>
 
                 <div class="topbar-right">
@@ -207,6 +236,26 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
             <main class="page-content">
                 <slot />
             </main>
+            <!-- ============ FLASH TOASTS ============ -->
+            <transition-group name="toast" tag="div" class="toast-container">
+                <div
+                    v-for="f in flashQueue"
+                    :key="f.id"
+                    :class="['toast-item', `toast-${f.type}`]"
+                >
+                    <div class="toast-icon">
+                        <i :class="['bi', flashConfig[f.type].icon]"></i>
+                    </div>
+                    <div class="toast-body">
+                        <div class="toast-title">{{ flashConfig[f.type].title }}</div>
+                        <div class="toast-message">{{ f.message }}</div>
+                    </div>
+                    <button class="toast-close" @click="removeFlash(f.id)">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                    <div class="toast-progress"></div>
+                </div>
+            </transition-group>
         </div>
     </div>
 </template>
@@ -699,6 +748,171 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 .page-content {
     flex: 1;
     padding: 24px;
+}
+
+/* ============ FLASH TOASTS ============ */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 380px;
+    width: calc(100% - 40px);
+    pointer-events: none;
+}
+
+.toast-item {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 44px 14px 14px;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow:
+        0 16px 40px -12px rgba(20, 33, 10, 0.25),
+        0 0 0 1px rgba(20, 33, 10, 0.05);
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+/* Accent bar kiri */
+.toast-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 4px 0 0 4px;
+}
+
+.toast-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.toast-body { flex: 1; min-width: 0; padding-top: 1px; }
+
+.toast-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #14210a;
+    margin-bottom: 2px;
+    letter-spacing: -0.2px;
+}
+
+.toast-message {
+    font-size: 12.5px;
+    color: #6b7a5e;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.toast-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    transition: all 0.15s;
+}
+
+.toast-close:hover { background: #f4f7ee; color: #14210a; }
+
+/* Progress bar auto-dismiss */
+.toast-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.toast-progress::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform-origin: left;
+    animation: toastProgress 4.5s linear forwards;
+}
+
+@keyframes toastProgress {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+}
+
+/* ===== VARIANT: SUCCESS ===== */
+.toast-success::before { background: #84bd33; }
+.toast-success .toast-icon { background: #eef7e0; color: #6ba324; }
+.toast-success .toast-progress::after { background: #84bd33; }
+
+/* ===== VARIANT: ERROR ===== */
+.toast-error::before { background: #ef4444; }
+.toast-error .toast-icon { background: #fee2e2; color: #dc2626; }
+.toast-error .toast-progress::after { background: #ef4444; }
+
+/* ===== VARIANT: WARNING ===== */
+.toast-warning::before { background: #f59e0b; }
+.toast-warning .toast-icon { background: #fef3c7; color: #d97706; }
+.toast-warning .toast-progress::after { background: #f59e0b; }
+
+/* ===== VARIANT: INFO ===== */
+.toast-info::before { background: #3b82f6; }
+.toast-info .toast-icon { background: #dbeafe; color: #1d4ed8; }
+.toast-info .toast-progress::after { background: #3b82f6; }
+
+/* ===== ANIMATIONS ===== */
+.toast-enter-active {
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.toast-leave-active {
+    transition: all 0.25s ease;
+    position: absolute;
+    right: 0;
+    width: 100%;
+}
+.toast-enter-from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+}
+.toast-leave-to {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+}
+.toast-move {
+    transition: transform 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .toast-container {
+        top: 12px;
+        right: 12px;
+        left: 12px;
+        width: auto;
+        max-width: none;
+    }
 }
 
 /* ============ RESPONSIVE ============ */
