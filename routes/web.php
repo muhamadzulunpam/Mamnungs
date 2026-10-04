@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Kasir\PosController;
+use App\Http\Controllers\OrderController;
 
 
 Route::middleware('guest')->group(function () {
@@ -34,5 +35,10 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:kasir')->prefix('kasir')->group(function () {
         Route::get('/', [PosController::class, 'index'])->name('kasir.pos');
         Route::post('/checkout', [PosController::class, 'checkout'])->name('kasir.checkout');
+    });
+
+    Route::middleware('role:admin,kasir')->group(function () {
+        Route::get('/transaksi', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/transaksi/{order}/struk', [OrderController::class, 'receipt'])->name('orders.receipt');
     });
 });

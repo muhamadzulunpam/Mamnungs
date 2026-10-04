@@ -14,15 +14,14 @@ const userMenuRef = ref(null);
 const adminMenus = [
     { label: 'Dashboard',     href: '/admin/dashboard',  icon: 'bi-grid-1x2' },
     { label: 'Kategori',      href: '/admin/categories', icon: 'bi-tags' },
-    // { label: 'Pesanan',       href: '/admin/orders',     icon: 'bi-bag-check' },
     { label: 'Menu & Produk', href: '/admin/products',   icon: 'bi-cup-straw' },
-    // { label: 'Pelanggan',     href: '/admin/customers',  icon: 'bi-people' },
+    { label: 'Riwayat',     href: '/transaksi', icon: 'bi-clock-history' },
     // { label: 'Laporan',       href: '/admin/reports',    icon: 'bi-graph-up-arrow' },
 ];
 
 const kasirMenus = [
     { label: 'Kasir / POS', href: '/kasir',         icon: 'bi-cash-coin' },
-    // { label: 'Riwayat',     href: '/kasir/history', icon: 'bi-clock-history' },
+    { label: 'Riwayat',     href: '/transaksi', icon: 'bi-clock-history' },
 ];
 
 const menus = computed(() =>
