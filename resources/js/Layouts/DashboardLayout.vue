@@ -22,7 +22,7 @@ const adminMenus = [
 
 const kasirMenus = [
     { label: 'Kasir / POS', href: '/kasir',         icon: 'bi-cash-coin' },
-    { label: 'Riwayat',     href: '/kasir/history', icon: 'bi-clock-history' },
+    // { label: 'Riwayat',     href: '/kasir/history', icon: 'bi-clock-history' },
 ];
 
 const menus = computed(() =>
