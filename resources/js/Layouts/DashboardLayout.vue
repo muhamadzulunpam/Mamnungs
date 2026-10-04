@@ -16,7 +16,7 @@ const adminMenus = [
     { label: 'Kategori',      href: '/admin/categories', icon: 'bi-tags' },
     { label: 'Menu & Produk', href: '/admin/products',   icon: 'bi-cup-straw' },
     { label: 'Riwayat',     href: '/transaksi', icon: 'bi-clock-history' },
-    // { label: 'Laporan',       href: '/admin/reports',    icon: 'bi-graph-up-arrow' },
+    { label: 'Laporan',       href: '/admin/reports',    icon: 'bi-graph-up-arrow' },
 ];
 
 const kasirMenus = [

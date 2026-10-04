@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Kasir\PosController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ReportController;
 
 
 Route::middleware('guest')->group(function () {
@@ -30,6 +31,9 @@ Route::middleware('auth')->group(function () {
         Route::patch('products/{product}/toggle', [ProductController::class, 'toggle'])
             ->name('products.toggle');
         Route::resource('products', ProductController::class)->except('show');
+
+        Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('reports/export', [ReportController::class, 'export'])->name('reports.export');  
     });
 
     Route::middleware('role:kasir, admin')->prefix('kasir')->group(function () {
