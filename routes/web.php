@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Kasir\PosController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\Admin\DashboardController;
 
 
 Route::middleware('guest')->group(function () {
@@ -22,8 +23,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/', fn () => redirect(AuthController::homeFor(auth()->user()->role)));
 
     Route::middleware('role:admin')->prefix('admin')->group(function () {
-        Route::get('/dashboard', fn () => Inertia::render('Admin/Dashboard'))
-            ->name('admin.dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
         Route::resource('categories', CategoryController::class)->except('show');
 
@@ -32,7 +32,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('products', ProductController::class)->except('show');
     });
 
-    Route::middleware('role:kasir')->prefix('kasir')->group(function () {
+    Route::middleware('role:kasir, admin')->prefix('kasir')->group(function () {
         Route::get('/', [PosController::class, 'index'])->name('kasir.pos');
         Route::post('/checkout', [PosController::class, 'checkout'])->name('kasir.checkout');
     });
