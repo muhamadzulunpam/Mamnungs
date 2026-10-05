@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use App\Services\MidtransService;
+use App\Models\ActivityLog;
 
 class PosController extends Controller
 {
@@ -105,6 +106,12 @@ class PosController extends Controller
 
             return $order;
         });
+        
+        ActivityLog::record(
+            'checkout',
+            "Membuat transaksi {$order->invoice_number} ({$method}) Rp" . number_format($order->total, 0, ',', '.'),
+            $order,
+        );
 
         if ($method === 'CASH') {
             return redirect("/transaksi/{$order->id}/struk");
