@@ -31,7 +31,7 @@ const menus = computed(() =>
 );
 
 const secondaryMenus = [
-    { label: 'Bantuan',    href: '/help',     icon: 'bi-question-circle' },
+    { label: 'Profil', href: '/profil', icon: 'bi-person-circle' },
 ];
 
 // ===== HELPERS =====
@@ -201,7 +201,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                             <div class="user-avatar">{{ initials }}</div>
                             <div class="user-info d-none d-sm-block">
                                 <span class="user-name">{{ user.name }}</span>
-                                <span class="user-role">{{ user.role }}</span>
                             </div>
                             <i :class="['bi', userMenuOpen ? 'bi-chevron-up' : 'bi-chevron-down', 'user-caret']"></i>
                         </button>
