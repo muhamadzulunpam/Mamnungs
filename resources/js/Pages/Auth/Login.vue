@@ -1,6 +1,7 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref } from 'vue'; 
+import logoEsteler from '../../assets/logo_esteler.png';
 
 const form = useForm({ email: '', password: '', remember: false });
 const showPassword = ref(false);
@@ -15,7 +16,7 @@ const submit = () => form.post('/login');
             <div class="login-brand">
                 <div class="brand-content">
                     <div class="brand-logo">
-                        <i class="bi bi-cup-straw"></i>
+                        <img :src="logoEsteler" alt="Mamnungs" class="brand-logo-img" />
                     </div>
                     <h1 class="brand-title">Mamnungs</h1>
                     <p class="brand-tagline">Es Teler Segar Setiap Hari 🍧</p>
@@ -201,8 +202,8 @@ const submit = () => form.post('/login');
 }
 
 .brand-logo {
-    width: 68px;
-    height: 68px;
+    width: 96px;
+    height: 96px;
     border-radius: 20px;
     background: rgba(255, 255, 255, 0.22);
     backdrop-filter: blur(12px);
@@ -210,9 +211,17 @@ const submit = () => form.post('/login');
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 34px;
+    overflow: hidden; 
+    padding: -2px;  
     margin-bottom: 22px;
     box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.2);
+}
+
+.brand-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
 }
 
 .brand-title {

@@ -4,6 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title inertia>Mamnungs</title>
+
+    {{-- ===== FAVICON ===== --}}
+    <link rel="icon" type="image/png" href="{{ asset('img/logo_esteler.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('img/logo_esteler.png') }}">
     <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}" type="text/css">
     <link rel="stylesheet" href="{{ asset('css/font-awesome.min.css') }}" type="text/css">
     <link rel="stylesheet" href="{{ asset('css/elegant-icons.css') }}" type="text/css">
