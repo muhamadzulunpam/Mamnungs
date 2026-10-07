@@ -12,6 +12,7 @@ use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\ProfileController;
 
 
 Route::middleware('guest')->group(function () {
@@ -57,6 +58,9 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin,kasir')->group(function () {
         Route::get('/transaksi', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/transaksi/{order}/struk', [OrderController::class, 'receipt'])->name('orders.receipt');
+        Route::get('/profil', [ProfileController::class, 'show'])->name('profile.show');
+        Route::put('/profil', [ProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profil/password', [ProfileController::class, 'password'])->name('profile.password');
     });
 });
 
