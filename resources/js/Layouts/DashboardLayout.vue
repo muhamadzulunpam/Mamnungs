@@ -1,28 +1,42 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
+import logoEsteler from '../assets/logo_esteler.png';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 
 // ===== STATE =====
-const sidebarOpen = ref(false);
+const sidebarOpen = ref(false);         // mobile drawer
+const sidebarCollapsed = ref(false);    // desktop collapse
 const userMenuOpen = ref(false);
 const userMenuRef = ref(null);
 
+// ===== RESTORE COLLAPSE STATE =====
+onMounted(() => {
+    const saved = localStorage.getItem('sidebar_collapsed');
+    if (saved !== null) {
+        sidebarCollapsed.value = saved === '1';
+    }
+});
+
+watch(sidebarCollapsed, (v) => {
+    localStorage.setItem('sidebar_collapsed', v ? '1' : '0');
+});
+
 // ===== MENU CONFIG =====
 const adminMenus = [
-    { label: 'Dashboard',     href: '/admin/dashboard',  icon: 'bi-grid-1x2' },
-    { label: 'Kategori',      href: '/admin/categories', icon: 'bi-tags' },
-    { label: 'Menu & Produk', href: '/admin/products',   icon: 'bi-cup-straw' },
-    { label: 'Riwayat',     href: '/transaksi', icon: 'bi-clock-history' },
-    { label: 'Laporan',       href: '/admin/reports',    icon: 'bi-graph-up-arrow' },
-    { label: 'Pengguna', href: '/admin/users', icon: 'bi-people' },
-    { label: 'Log Aktivitas', href: '/admin/activity-logs', icon: 'bi-clock' },     
+    { label: 'Dashboard',     href: '/admin/dashboard',    icon: 'bi-grid-1x2' },
+    { label: 'Kategori',      href: '/admin/categories',   icon: 'bi-tags' },
+    { label: 'Menu & Produk', href: '/admin/products',     icon: 'bi-cup-straw' },
+    { label: 'Riwayat',       href: '/transaksi',          icon: 'bi-clock-history' },
+    { label: 'Laporan',       href: '/admin/reports',      icon: 'bi-graph-up-arrow' },
+    { label: 'Pengguna',      href: '/admin/users',        icon: 'bi-people' },
+    { label: 'Log Aktivitas', href: '/admin/activity-logs', icon: 'bi-clock' },
 ];
 
 const kasirMenus = [
-    { label: 'Kasir / POS', href: '/kasir',         icon: 'bi-cash-coin' },
+    { label: 'Kasir / POS', href: '/kasir',     icon: 'bi-cash-coin' },
     { label: 'Riwayat',     href: '/transaksi', icon: 'bi-clock-history' },
 ];
 
@@ -51,6 +65,10 @@ const logout = () => {
     router.post('/logout');
 };
 
+const toggleCollapse = () => {
+    sidebarCollapsed.value = !sidebarCollapsed.value;
+};
+
 // ===== CLICK OUTSIDE =====
 const handleClickOutside = (e) => {
     if (userMenuRef.value && !userMenuRef.value.contains(e.target)) {
@@ -68,7 +86,6 @@ const flashConfig = {
     info:    { icon: 'bi-info-circle-fill',          title: 'Info' },
 };
 
-// ⬇️ Deklarasi function DULU sebelum watch ⬇️
 const removeFlash = (id) => {
     flashQueue.value = flashQueue.value.filter((f) => f.id !== id);
 };
@@ -79,7 +96,6 @@ const pushFlash = (type, message) => {
     setTimeout(() => removeFlash(id), 4500);
 };
 
-// ⬇️ Baru watch setelah function siap ⬇️
 watch(
     () => page.props.flash,
     (val) => {
@@ -102,16 +118,25 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
         <!-- ============ SIDEBAR ============ -->
         <aside
             class="sidebar"
-            :class="{ 'sidebar-open': sidebarOpen }"
+            :class="{
+                'sidebar-open': sidebarOpen,
+                'is-collapsed': sidebarCollapsed,
+            }"
         >
             <!-- Brand -->
             <div class="sidebar-brand">
-                <div class="brand-mark"><i class="bi bi-cup-straw"></i></div>
+                <div class="brand-mark">
+                    <img :src="logoEsteler" alt="Mamnungs" class="brand-logo-img" />
+                </div>
                 <div class="brand-text">
                     <span class="brand-name">Mamnungs</span>
                     <span class="brand-tag">Es Teler Segar</span>
                 </div>
-                <button class="sidebar-close d-lg-none" @click="sidebarOpen = false">
+                <button
+                    class="sidebar-close d-lg-none"
+                    @click="sidebarOpen = false"
+                    title="Tutup"
+                >
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
@@ -126,6 +151,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                         :href="m.href"
                         class="nav-item"
                         :class="{ 'nav-item-active': isActive(m.href) }"
+                        :title="sidebarCollapsed ? m.label : ''"
                         @click="sidebarOpen = false"
                     >
                         <i :class="['bi', m.icon, 'nav-icon']"></i>
@@ -145,6 +171,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                         :href="m.href"
                         class="nav-item"
                         :class="{ 'nav-item-active': isActive(m.href) }"
+                        :title="sidebarCollapsed ? m.label : ''"
                         @click="sidebarOpen = false"
                     >
                         <i :class="['bi', m.icon, 'nav-icon']"></i>
@@ -153,15 +180,22 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                 </nav>
             </div>
 
+            <!-- User card -->
             <div class="sidebar-user-card">
                 <div class="user-card-top">
-                    <div class="user-card-avatar">{{ initials }}</div>
+                    <div class="user-card-avatar" :title="user.name">
+                        {{ initials }}
+                    </div>
                     <div class="user-card-info">
                         <span class="user-card-name">{{ user.name }}</span>
                         <span class="user-card-role">{{ user.role }}</span>
                     </div>
                 </div>
-                <button class="btn-logout" @click="logout">
+                <button
+                    class="btn-logout"
+                    @click="logout"
+                    :title="sidebarCollapsed ? 'Keluar' : ''"
+                >
                     <i class="bi bi-box-arrow-right"></i>
                     <span>Keluar</span>
                 </button>
@@ -180,8 +214,22 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
             <!-- Topbar -->
             <header class="topbar">
                 <div class="topbar-left">
-                    <button class="hamburger d-lg-none" @click="sidebarOpen = true">
+                    <!-- Mobile: hamburger -->
+                    <button
+                        class="hamburger d-lg-none"
+                        @click="sidebarOpen = true"
+                        title="Buka Menu"
+                    >
                         <i class="bi bi-list"></i>
+                    </button>
+
+                    <!-- Desktop: toggle collapse -->
+                    <button
+                        class="collapse-toggle d-none d-lg-flex"
+                        @click="toggleCollapse"
+                        :title="sidebarCollapsed ? 'Perbesar Sidebar' : 'Perkecil Sidebar'"
+                    >
+                        <i :class="['bi', sidebarCollapsed ? 'bi-chevron-right' : 'bi-chevron-left']"></i>
                     </button>
                 </div>
 
@@ -215,11 +263,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                     </div>
                                 </div>
                                 <div class="dropdown-divider"></div>
-                                <Link href="/profile" class="dropdown-item">
+                                <Link href="/profil" class="dropdown-item">
                                     <i class="bi bi-person"></i> Profil Saya
-                                </Link>
-                                <Link href="/settings" class="dropdown-item">
-                                    <i class="bi bi-gear"></i> Pengaturan
                                 </Link>
                                 <div class="dropdown-divider"></div>
                                 <button class="dropdown-item dropdown-danger" @click="logout">
@@ -235,6 +280,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
             <main class="page-content">
                 <slot />
             </main>
+
             <!-- ============ FLASH TOASTS ============ -->
             <transition-group name="toast" tag="div" class="toast-container">
                 <div
@@ -284,8 +330,11 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     top: 0;
     height: 100vh;
     overflow-y: auto;
+    overflow-x: hidden;
     flex-shrink: 0;
     z-index: 40;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                padding 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar::-webkit-scrollbar { width: 5px; }
@@ -300,11 +349,12 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     margin-bottom: 20px;
     position: relative;
+    transition: all 0.25s ease;
 }
 
 .brand-mark {
-    width: 42px;
-    height: 42px;
+    width: 52px;
+    height: 52px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.18);
     border: 1px solid rgba(255, 255, 255, 0.25);
@@ -315,9 +365,24 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     font-size: 22px;
     color: #fef9c3;
     flex-shrink: 0;
+    transition: all 0.25s ease;
+    overflow: hidden;
+    padding: -2px;
+}
+.brand-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
 }
 
-.brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+    transition: opacity 0.15s ease;
+}
+
 .brand-name { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
 .brand-tag { font-size: 11px; color: rgba(254, 249, 195, 0.85); font-weight: 500; margin-top: 2px; }
 
@@ -338,7 +403,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 }
 
 /* Sections */
-.sidebar-section { margin-bottom: 22px; }
+.sidebar-section { margin-bottom: 22px; transition: margin 0.25s ease; }
 
 .section-label {
     display: block;
@@ -348,6 +413,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     text-transform: uppercase;
     letter-spacing: 0.9px;
     padding: 0 12px 8px;
+    transition: opacity 0.15s ease;
 }
 
 .sidebar-nav { display: flex; flex-direction: column; gap: 3px; }
@@ -388,10 +454,24 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     height: 22px;
     background: #fef9c3;
     border-radius: 0 4px 4px 0;
+    transition: all 0.25s ease;
 }
 
-.nav-icon { font-size: 17px; width: 20px; text-align: center; flex-shrink: 0; }
-.nav-label { flex: 1; }
+.nav-icon {
+    font-size: 17px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+    transition: all 0.25s ease;
+}
+
+.nav-label {
+    flex: 1;
+    transition: opacity 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
 .nav-arrow {
     font-size: 11px;
     opacity: 0;
@@ -401,6 +481,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 .nav-item:hover .nav-arrow,
 .nav-item-active .nav-arrow { opacity: 1; transform: translateX(0); }
 
+/* User card */
 .sidebar-user-card {
     margin-top: auto;
     background: rgba(255, 255, 255, 0.1);
@@ -408,6 +489,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     border-radius: 16px;
     padding: 14px;
     backdrop-filter: blur(8px);
+    transition: all 0.25s ease;
 }
 
 .user-card-top {
@@ -417,6 +499,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     margin-bottom: 12px;
     padding-bottom: 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    transition: all 0.25s ease;
 }
 
 .user-card-avatar {
@@ -432,6 +515,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     font-size: 13px;
     flex-shrink: 0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.25s ease;
 }
 
 .user-card-info {
@@ -439,6 +523,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     flex-direction: column;
     line-height: 1.2;
     min-width: 0;
+    transition: opacity 0.15s ease;
 }
 
 .user-card-name {
@@ -475,6 +560,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .btn-logout:hover {
@@ -487,6 +573,121 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 
 .btn-logout:active { transform: translateY(0); }
 .btn-logout i { font-size: 15px; }
+
+/* ============ SIDEBAR COLLAPSED STATE ============ */
+.sidebar.is-collapsed {
+    width: 72px;
+    padding: 22px 10px;
+}
+
+.sidebar.is-collapsed .sidebar-brand {
+    justify-content: center;
+    padding: 4px 0 20px;
+    gap: 0;
+}
+
+.sidebar.is-collapsed .brand-text {
+    display: none;
+}
+
+.sidebar.is-collapsed .brand-mark {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+}
+
+.sidebar.is-collapsed .section-label {
+    display: none;
+}
+
+.sidebar.is-collapsed .sidebar-section {
+    margin-bottom: 12px;
+}
+
+.sidebar.is-collapsed .nav-item {
+    justify-content: center;
+    padding: 11px 0;
+    gap: 0;
+    position: relative;
+}
+
+.sidebar.is-collapsed .nav-label,
+.sidebar.is-collapsed .nav-arrow {
+    display: none;
+}
+
+.sidebar.is-collapsed .nav-icon {
+    font-size: 19px;
+    width: auto;
+}
+
+.sidebar.is-collapsed .nav-item-active::before {
+    left: -10px;
+    height: 20px;
+}
+
+/* Tooltip saat collapsed */
+.sidebar.is-collapsed .nav-item::after {
+    content: attr(title);
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-4px);
+    padding: 6px 12px;
+    background: #14210a;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    border-radius: 8px;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.18s ease;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.sidebar.is-collapsed .nav-item:hover::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* User card collapsed */
+.sidebar.is-collapsed .sidebar-user-card {
+    padding: 10px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sidebar.is-collapsed .user-card-top {
+    justify-content: center;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    gap: 0;
+}
+
+.sidebar.is-collapsed .user-card-info {
+    display: none;
+}
+
+.sidebar.is-collapsed .user-card-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+}
+
+.sidebar.is-collapsed .btn-logout {
+    padding: 10px 0;
+    justify-content: center;
+    width: 40px;
+    margin: 0 auto;
+}
+
+.sidebar.is-collapsed .btn-logout span {
+    display: none;
+}
 
 /* Backdrop */
 .sidebar-backdrop {
@@ -538,51 +739,39 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-/* Search */
-.search-box {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
-    background: #f8fbf3;
-    border: 1.5px solid #e2e8d5;
-    border-radius: 12px;
-    width: 380px;
-    max-width: 100%;
     transition: all 0.2s;
 }
 
-.search-box:focus-within {
-    background: #fff;
+.hamburger:hover {
     border-color: #84bd33;
-    box-shadow: 0 0 0 4px rgba(132, 189, 51, 0.12);
+    color: #6ba324;
+    background: #f8fbf3;
 }
 
-.search-box i { color: #94a3b8; font-size: 15px; }
-
-.search-box input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    outline: none;
-    font-size: 13.5px;
-    font-family: inherit;
-    color: #14210a;
-}
-
-.search-box input::placeholder { color: #94a3b8; }
-
-.search-box kbd {
-    font-size: 10.5px;
-    font-weight: 700;
-    color: #6b7a5e;
-    background: #fff;
+.collapse-toggle {
+    width: 38px;
+    height: 38px;
     border: 1px solid #e2e8d5;
-    border-radius: 5px;
-    padding: 2px 6px;
-    font-family: inherit;
+    background: #fff;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #4a5a3d;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.collapse-toggle:hover {
+    border-color: #84bd33;
+    color: #6ba324;
+    background: #f8fbf3;
+    transform: scale(1.05);
+}
+
+.collapse-toggle:active {
+    transform: scale(0.95);
 }
 
 /* Icon button */
@@ -669,13 +858,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 
 .user-info { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
 .user-name { font-size: 13px; font-weight: 700; color: #14210a; }
-.user-role {
-    font-size: 10.5px;
-    color: #6ba324;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-}
 
 .user-caret { font-size: 11px; color: #94a3b8; }
 
@@ -778,7 +960,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     pointer-events: auto;
 }
 
-/* Accent bar kiri */
 .toast-item::before {
     content: '';
     position: absolute;
@@ -837,7 +1018,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 
 .toast-close:hover { background: #f4f7ee; color: #14210a; }
 
-/* Progress bar auto-dismiss */
 .toast-progress {
     position: absolute;
     left: 0;
@@ -861,27 +1041,24 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     to   { transform: scaleX(0); }
 }
 
-/* ===== VARIANT: SUCCESS ===== */
+/* Variants */
 .toast-success::before { background: #84bd33; }
 .toast-success .toast-icon { background: #eef7e0; color: #6ba324; }
 .toast-success .toast-progress::after { background: #84bd33; }
 
-/* ===== VARIANT: ERROR ===== */
 .toast-error::before { background: #ef4444; }
 .toast-error .toast-icon { background: #fee2e2; color: #dc2626; }
 .toast-error .toast-progress::after { background: #ef4444; }
 
-/* ===== VARIANT: WARNING ===== */
 .toast-warning::before { background: #f59e0b; }
 .toast-warning .toast-icon { background: #fef3c7; color: #d97706; }
 .toast-warning .toast-progress::after { background: #f59e0b; }
 
-/* ===== VARIANT: INFO ===== */
 .toast-info::before { background: #3b82f6; }
 .toast-info .toast-icon { background: #dbeafe; color: #1d4ed8; }
 .toast-info .toast-progress::after { background: #3b82f6; }
 
-/* ===== ANIMATIONS ===== */
+/* Animations */
 .toast-enter-active {
     transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -903,7 +1080,80 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     transition: transform 0.3s ease;
 }
 
-/* Responsive */
+/* ============ RESPONSIVE ============ */
+@media (max-width: 991.98px) {
+    /* Mobile: sidebar tetap drawer overlay */
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+        width: 260px !important;
+        padding: 22px 16px !important;
+    }
+
+    .sidebar.sidebar-open {
+        transform: translateX(0);
+    }
+
+    /* Reset semua collapsed style di mobile */
+    .sidebar.is-collapsed .brand-text,
+    .sidebar.is-collapsed .section-label,
+    .sidebar.is-collapsed .nav-label,
+    .sidebar.is-collapsed .user-card-info,
+    .sidebar.is-collapsed .btn-logout span {
+        display: block !important;
+    }
+
+    .sidebar.is-collapsed .nav-item {
+        justify-content: flex-start !important;
+        padding: 10px 12px !important;
+        gap: 12px !important;
+    }
+
+    .sidebar.is-collapsed .nav-icon {
+        font-size: 17px !important;
+        width: 20px !important;
+    }
+
+    .sidebar.is-collapsed .sidebar-brand {
+        justify-content: flex-start !important;
+        padding: 4px 8px 24px !important;
+        gap: 12px !important;
+    }
+
+    .sidebar.is-collapsed .user-card-top {
+        justify-content: flex-start !important;
+        padding-bottom: 12px !important;
+        margin-bottom: 12px !important;
+        gap: 10px !important;
+    }
+
+    .sidebar.is-collapsed .btn-logout {
+        width: 100% !important;
+        padding: 10px 14px !important;
+        justify-content: center !important;
+    }
+
+    .sidebar.is-collapsed .sidebar-user-card {
+        padding: 14px !important;
+    }
+
+    .sidebar.is-collapsed .nav-item::after {
+        display: none !important;
+    }
+
+    .page-content { padding: 18px; }
+    .topbar { padding: 10px 16px; }
+}
+
+@media (max-width: 575.98px) {
+    .topbar-divider { display: none; }
+    .user-info { display: none !important; }
+}
+
 @media (max-width: 480px) {
     .toast-container {
         top: 12px;
@@ -912,27 +1162,5 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
         width: auto;
         max-width: none;
     }
-}
-
-/* ============ RESPONSIVE ============ */
-@media (max-width: 991.98px) {
-    .sidebar {
-        position: fixed;
-        left: 0;
-        top: 0;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-        box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
-    }
-    .sidebar-open { transform: translateX(0); }
-
-    .page-content { padding: 18px; }
-    .topbar { padding: 10px 16px; }
-    .search-box { width: auto; flex: 1; }
-}
-
-@media (max-width: 575.98px) {
-    .search-box { display: none !important; }
-    .topbar-divider { display: none; }
 }
 </style>
